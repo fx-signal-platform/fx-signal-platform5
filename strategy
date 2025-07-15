@@ -1,0 +1,40 @@
+import pandas as pd
+
+def detect_trend(df, period=200):
+    """
+    Detect trend based on 200 EMA:
+    - Uptrend if close > EMA
+    - Downtrend if close < EMA
+    """
+    if df is None or df.empty:
+        return "neutral"
+    df = df.copy()
+    df['ema'] = df['close'].ewm(span=period).mean()
+    if df['close'].iloc[-1] > df['ema'].iloc[-1]:
+        return "uptrend"
+    elif df['close'].iloc[-1] < df['ema'].iloc[-1]:
+        return "downtrend"
+    return "neutral"
+
+def get_trend_alignment(data):
+    """
+    Given OHLCV data dict for weekly, daily, and 4h:
+    Return 'uptrend' or 'downtrend' if 2+ align
+    """
+    timeframes = ['weekly', 'daily', '4h']
+    trends = []
+
+    for tf in timeframes:
+        df = data.get(tf)
+        trend = detect_trend(df)
+        trends.append(trend)
+
+    up = trends.count("uptrend")
+    down = trends.count("downtrend")
+
+    if up >= 2:
+        return "uptrend"
+    elif down >= 2:
+        return "downtrend"
+    else:
+        return "neutral"
